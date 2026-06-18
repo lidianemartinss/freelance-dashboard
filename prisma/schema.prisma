@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  LEAD
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  INVOICED
+  PAID
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Project {
+  id        String        @id @default(cuid())
+  name      String
+  client    String
+  status    ProjectStatus @default(ACTIVE)
+  budget    Float?        // total agreed amount for the project, in your currency
+  deadline  DateTime?
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  payments Payment[]
+  tasks    Task[]
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  projectId String?
+  project   Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  date      DateTime      @default(now())
+  notes     String?
+  createdAt DateTime      @default(now())
+}
+
+model Task {
+  id        String    @id @default(cuid())
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title     String
+  done      Boolean   @default(false)
+  dueDate   DateTime?
+  priority  Priority  @default(MEDIUM)
+  createdAt DateTime  @default(now())
+}
+
+// Single-row table holding the savings goal (e.g. funding a master's in Italy)
+model Goal {
+  id          String   @id @default(cuid())
+  name        String   @default("Master's in Italy")
+  targetAmount Float
+  targetDate  DateTime?
+  currency    String   @default("EUR")
+  notes       String?
+  updatedAt   DateTime @updatedAt
+}
