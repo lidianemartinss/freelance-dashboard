@@ -1,6 +1,8 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // Single-row goal: fetch the first one, or null
 export async function GET() {
   const goal = await prisma.goal.findFirst();
