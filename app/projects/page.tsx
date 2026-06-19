@@ -95,7 +95,7 @@ export default function ProjectsPage() {
           />
           <input
             className="input"
-            placeholder="Budget (EUR)"
+            placeholder="Budget (R$)"
             type="number"
             value={form.budget}
             onChange={(e) => setForm({ ...form, budget: e.target.value })}

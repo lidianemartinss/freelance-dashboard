@@ -146,7 +146,7 @@ export default function IncomePage() {
           </select>
           <input
             className="input"
-            placeholder="Amount (EUR)"
+            placeholder="Amount (R$)"
             type="number"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}

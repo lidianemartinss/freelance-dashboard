@@ -1,5 +1,5 @@
-﻿export function formatCurrency(amount: number, currency = "EUR") {
-  return new Intl.NumberFormat("en-IE", {
+﻿export function formatCurrency(amount: number, currency = "BRL") {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
@@ -27,6 +27,7 @@ export function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+// ISO week number (Mon-Sun), used to compare "same week" for weekly recurring tasks.
 function isoWeekKey(d: Date) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const dayNum = date.getUTCDay() || 7;
@@ -36,6 +37,11 @@ function isoWeekKey(d: Date) {
   return `${date.getUTCFullYear()}-${weekNo}`;
 }
 
+/**
+ * For recurring tasks, "done" isn't a permanent flag — it's whether
+ * lastCompletedAt falls within the current period (today for DAILY,
+ * this week for WEEKLY). Non-recurring tasks just use the `done` flag.
+ */
 export function isDoneForPeriod(
   recurrence: "NONE" | "DAILY" | "WEEKLY",
   done: boolean,
@@ -52,5 +58,6 @@ export function isDoneForPeriod(
       last.getDate() === now.getDate()
     );
   }
+  // WEEKLY
   return isoWeekKey(last) === isoWeekKey(now);
 }
