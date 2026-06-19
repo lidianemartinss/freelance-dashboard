@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       title: body.title,
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       priority: body.priority ?? "MEDIUM",
+      recurrence: body.recurrence ?? "NONE",
     },
   });
-  return NextResponse.json(task, { status: 201 });
-}
+  return

@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatDate, classNames } from "@/lib/utils";
+import { formatDate, classNames, isDoneForPeriod } from "@/lib/utils";
 
 type Project = { id: string; name: string };
+type Recurrence = "NONE" | "DAILY" | "WEEKLY";
 type Task = {
   id: string;
   title: string;
   done: boolean;
   dueDate: string | null;
   priority: "LOW" | "MEDIUM" | "HIGH";
+  recurrence: Recurrence;
+  lastCompletedAt: string | null;
   projectId: string | null;
   project: Project | null;
 };
@@ -20,13 +23,25 @@ const PRIORITY_STYLES: Record<Task["priority"], string> = {
   HIGH: "bg-red-100 text-red-700",
 };
 
+const RECURRENCE_LABEL: Record<Recurrence, string> = {
+  NONE: "",
+  DAILY: "Diária",
+  WEEKLY: "Semanal",
+};
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [hideDone, setHideDone] = useState(true);
-  const [form, setForm] = useState({ title: "", projectId: "", dueDate: "", priority: "MEDIUM" });
+  const [form, setForm] = useState({
+    title: "",
+    projectId: "",
+    dueDate: "",
+    priority: "MEDIUM",
+    recurrence: "NONE" as Recurrence,
+  });
 
   async function load() {
     setLoading(true);
@@ -48,17 +63,27 @@ export default function TasksPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    setForm({ title: "", projectId: "", dueDate: "", priority: "MEDIUM" });
+    setForm({ title: "", projectId: "", dueDate: "", priority: "MEDIUM", recurrence: "NONE" });
     setShowForm(false);
     load();
   }
 
   async function toggleDone(t: Task) {
-    await fetch(`/api/tasks/${t.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: !t.done }),
-    });
+    const currentlyDone = isDoneForPeriod(t.recurrence, t.done, t.lastCompletedAt);
+    if (t.recurrence === "NONE") {
+      await fetch(`/api/tasks/${t.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: !currentlyDone }),
+      });
+    } else {
+      // For recurring tasks, "done" is derived from lastCompletedAt.
+      await fetch(`/api/tasks/${t.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lastCompletedAt: currentlyDone ? null : new Date().toISOString() }),
+      });
+    }
     load();
   }
 
@@ -67,7 +92,9 @@ export default function TasksPage() {
     load();
   }
 
-  const visible = hideDone ? tasks.filter((t) => !t.done) : tasks;
+  const visible = hideDone
+    ? tasks.filter((t) => !isDoneForPeriod(t.recurrence, t.done, t.lastCompletedAt))
+    : tasks;
 
   return (
     <div className="space-y-6">
@@ -118,11 +145,21 @@ export default function TasksPage() {
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>
           </select>
+          <select
+            className="input"
+            value={form.recurrence}
+            onChange={(e) => setForm({ ...form, recurrence: e.target.value as Recurrence })}
+          >
+            <option value="NONE">Não recorrente</option>
+            <option value="DAILY">Diária (todo dia)</option>
+            <option value="WEEKLY">Semanal (toda semana)</option>
+          </select>
           <input
-            className="input sm:col-span-2"
+            className="input"
             type="date"
             value={form.dueDate}
             onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+            placeholder="Due date"
           />
           <div className="sm:col-span-2">
             <button type="submit" className="btn">
@@ -138,40 +175,5 @@ export default function TasksPage() {
         <p className="text-gray-400">Nothing here.</p>
       ) : (
         <div className="card divide-y divide-gray-100">
-          {visible.map((t) => (
-            <div key={t.id} className="py-3 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <input type="checkbox" checked={t.done} onChange={() => toggleDone(t)} />
-                <div>
-                  <p className={classNames("font-medium", t.done && "line-through text-gray-400")}>
-                    {t.title}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {t.project ? t.project.name : "No project"}
-                    {t.dueDate ? ` · due ${formatDate(t.dueDate)}` : ""}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={classNames(
-                    "text-xs font-medium rounded-full px-2 py-1",
-                    PRIORITY_STYLES[t.priority]
-                  )}
-                >
-                  {t.priority}
-                </span>
-                <button
-                  onClick={() => remove(t.id)}
-                  className="text-xs text-gray-400 hover:text-danger"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+          {visible.map((t) => {
+            const done = isDoneForPeriod(t.recurrence, 

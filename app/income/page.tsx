@@ -78,6 +78,16 @@ export default function IncomePage() {
     .filter((p) => p.status !== "PAID")
     .reduce((s, p) => s + p.amount, 0);
 
+  // Breakdown by source (project) — e.g. Shopee vs each freelance client.
+  const bySource = payments
+    .filter((p) => p.status === "PAID")
+    .reduce<Record<string, number>>((acc, p) => {
+      const key = p.project ? p.project.name : "Sem fonte";
+      acc[key] = (acc[key] || 0) + p.amount;
+      return acc;
+    }, {});
+  const sourceEntries = Object.entries(bySource).sort((a, b) => b[1] - a[1]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -97,6 +107,29 @@ export default function IncomePage() {
           <p className="text-2xl font-semibold mt-1">{formatCurrency(pendingTotal)}</p>
         </div>
       </div>
+
+      {sourceEntries.length > 0 && (
+        <div className="card">
+          <p className="text-sm text-gray-400 mb-2">Por fonte de renda</p>
+          <ul className="space-y-2">
+            {sourceEntries.map(([name, total]) => {
+              const pct = paidTotal > 0 ? (total / paidTotal) * 100 : 0;
+              return (
+                <li key={name} className="flex items-center justify-between text-sm gap-3">
+                  <span className="font-medium w-32 truncate">{name}</span>
+                  <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                      className="h-full bg-accent2 rounded-full"
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-gray-500 w-20 text-right">{formatCurrency(total)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={addPayment} className="card grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -155,39 +188,3 @@ export default function IncomePage() {
         <p className="text-gray-400">No payments logged yet.</p>
       ) : (
         <div className="card divide-y divide-gray-100">
-          {payments.map((p) => (
-            <div key={p.id} className="py-3 flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium">{formatCurrency(p.amount)}</p>
-                <p className="text-sm text-gray-400">
-                  {p.project ? p.project.name : "No project"} · {formatDate(p.date)}
-                </p>
-                {p.notes && <p className="text-sm text-gray-500">{p.notes}</p>}
-              </div>
-              <div className="flex items-center gap-3">
-                <select
-                  value={p.status}
-                  onChange={(e) => updateStatus(p.id, e.target.value as Payment["status"])}
-                  className={classNames(
-                    "text-xs font-medium rounded-full px-2 py-1 border-none",
-                    STATUS_STYLES[p.status]
-                  )}
-                >
-                  <option value="PENDING">PENDING</option>
-                  <option value="INVOICED">INVOICED</option>
-                  <option value="PAID">PAID</option>
-                </select>
-                <button
-                  onClick={() => remove(p.id)}
-                  className="text-xs text-gray-400 hover:text-danger"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

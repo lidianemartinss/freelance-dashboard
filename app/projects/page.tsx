@@ -88,7 +88,7 @@ export default function ProjectsPage() {
           />
           <input
             className="input"
-            placeholder="Client"
+            placeholder="Client (ou fonte de renda, ex: Shopee)"
             value={form.client}
             onChange={(e) => setForm({ ...form, client: e.target.value })}
             required
@@ -161,8 +161,4 @@ export default function ProjectsPage() {
               </button>
             </div>
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
+        </

@@ -27,12 +27,18 @@ enum Priority {
   HIGH
 }
 
+enum Recurrence {
+  NONE
+  DAILY
+  WEEKLY
+}
+
 model Project {
   id        String        @id @default(cuid())
   name      String
   client    String
   status    ProjectStatus @default(ACTIVE)
-  budget    Float?        // total agreed amount for the project, in your currency
+  budget    Float?
   deadline  DateTime?
   notes     String?
   createdAt DateTime      @default(now())
@@ -54,23 +60,24 @@ model Payment {
 }
 
 model Task {
-  id        String    @id @default(cuid())
-  projectId String?
-  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  title     String
-  done      Boolean   @default(false)
-  dueDate   DateTime?
-  priority  Priority  @default(MEDIUM)
-  createdAt DateTime  @default(now())
+  id              String     @id @default(cuid())
+  projectId       String?
+  project         Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  title           String
+  done            Boolean    @default(false)
+  dueDate         DateTime?
+  priority        Priority   @default(MEDIUM)
+  recurrence      Recurrence @default(NONE)
+  lastCompletedAt DateTime?
+  createdAt       DateTime   @default(now())
 }
 
-// Single-row table holding the savings goal (e.g. funding a master's in Italy)
 model Goal {
-  id          String   @id @default(cuid())
-  name        String   @default("Master's in Italy")
+  id           String    @id @default(cuid())
+  name         String    @default("Master's in Italy")
   targetAmount Float
-  targetDate  DateTime?
-  currency    String   @default("EUR")
-  notes       String?
-  updatedAt   DateTime @updatedAt
+  targetDate   DateTime?
+  currency     String    @default("EUR")
+  notes        String?
+  updatedAt    DateTime  @updatedAt
 }

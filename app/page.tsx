@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { Payment } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { formatCurrency, formatDate, daysUntil } from "@/lib/utils";
+import { formatCurrency, formatDate, daysUntil, isDoneForPeriod } from "@/lib/utils";
 import ProgressBar from "@/components/ProgressBar";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [goal, payments, projects, tasks] = await Promise.all([
+  const [goal, payments, projects, allOpenTasks] = await Promise.all([
     prisma.goal.findFirst(),
     prisma.payment.findMany({ orderBy: { date: "desc" } }),
     prisma.project.findMany({
@@ -15,12 +15,16 @@ export default async function DashboardPage() {
       orderBy: { deadline: "asc" },
     }),
     prisma.task.findMany({
-      where: { done: false },
+      where: { OR: [{ done: false }, { recurrence: { not: "NONE" } }] },
       orderBy: { dueDate: "asc" },
-      take: 6,
       include: { project: true },
     }),
   ]);
+
+  // Recurring tasks aren't "done" via the done flag — compute per-period completion in JS.
+  const tasks = allOpenTasks
+    .filter((t) => !isDoneForPeriod(t.recurrence, t.done, t.lastCompletedAt))
+    .slice(0, 6);
 
   const paidTotal = payments
     .filter((p: Payment) => p.status === "PAID")
@@ -162,15 +166,4 @@ export default async function DashboardPage() {
                     <p className="font-medium">{t.title}</p>
                     {t.project && <p className="text-gray-400">{t.project.name}</p>}
                   </div>
-                  <div className="text-right text-gray-400">
-                    {t.dueDate ? formatDate(t.dueDate) : t.priority}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
+    
