@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { formatDate, classNames, isDoneForPeriod } from "@/lib/utils";
@@ -77,7 +77,6 @@ export default function TasksPage() {
         body: JSON.stringify({ done: !currentlyDone }),
       });
     } else {
-      // For recurring tasks, "done" is derived from lastCompletedAt.
       await fetch(`/api/tasks/${t.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -176,4 +175,47 @@ export default function TasksPage() {
       ) : (
         <div className="card divide-y divide-gray-100">
           {visible.map((t) => {
-            const done = isDoneForPeriod(t.recurrence, 
+            const done = isDoneForPeriod(t.recurrence, t.done, t.lastCompletedAt);
+            return (
+              <div key={t.id} className="py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <input type="checkbox" checked={done} onChange={() => toggleDone(t)} />
+                  <div>
+                    <p className={classNames("font-medium", done && "line-through text-gray-400")}>
+                      {t.title}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {t.project ? t.project.name : "No project"}
+                      {t.dueDate ? ` · due ${formatDate(t.dueDate)}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {t.recurrence !== "NONE" && (
+                    <span className="text-xs font-medium rounded-full px-2 py-1 bg-accent2/10 text-accent2">
+                      {RECURRENCE_LABEL[t.recurrence]}
+                    </span>
+                  )}
+                  <span
+                    className={classNames(
+                      "text-xs font-medium rounded-full px-2 py-1",
+                      PRIORITY_STYLES[t.priority]
+                    )}
+                  >
+                    {t.priority}
+                  </span>
+                  <button
+                    onClick={() => remove(t.id)}
+                    className="text-xs text-gray-400 hover:text-danger"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
