@@ -1,4 +1,4 @@
-﻿export function formatCurrency(amount: number, currency = "BRL") {
+export function formatCurrency(amount: number, currency = "BRL") {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency,
@@ -60,4 +60,40 @@ export function isDoneForPeriod(
   }
   // WEEKLY
   return isoWeekKey(last) === isoWeekKey(now);
+}
+
+// --- Agenda helpers ---
+
+export function startOfWeek(date: Date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay() || 7; // Mon=1 ... Sun=7
+  d.setDate(d.getDate() - (day - 1));
+  return d;
+}
+
+export function addDays(date: Date, n: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+export function isSameDay(a: Date | string, b: Date | string) {
+  const da = typeof a === "string" ? new Date(a) : a;
+  const db = typeof b === "string" ? new Date(b) : b;
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+}
+
+const WEEKDAY_PT = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const WEEKDAY_PT_SHORT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+
+export function weekdayPT(date: Date, short = false) {
+  return (short ? WEEKDAY_PT_SHORT : WEEKDAY_PT)[date.getDay()];
+}
+
+export function formatDayMonth(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(date);
 }
