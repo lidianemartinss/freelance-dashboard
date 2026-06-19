@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { formatCurrency, formatDate, classNames } from "@/lib/utils";
@@ -78,7 +78,6 @@ export default function IncomePage() {
     .filter((p) => p.status !== "PAID")
     .reduce((s, p) => s + p.amount, 0);
 
-  // Breakdown by source (project) — e.g. Shopee vs each freelance client.
   const bySource = payments
     .filter((p) => p.status === "PAID")
     .reduce<Record<string, number>>((acc, p) => {
@@ -188,3 +187,39 @@ export default function IncomePage() {
         <p className="text-gray-400">No payments logged yet.</p>
       ) : (
         <div className="card divide-y divide-gray-100">
+          {payments.map((p) => (
+            <div key={p.id} className="py-3 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium">{formatCurrency(p.amount)}</p>
+                <p className="text-sm text-gray-400">
+                  {p.project ? p.project.name : "No project"} · {formatDate(p.date)}
+                </p>
+                {p.notes && <p className="text-sm text-gray-500">{p.notes}</p>}
+              </div>
+              <div className="flex items-center gap-3">
+                <select
+                  value={p.status}
+                  onChange={(e) => updateStatus(p.id, e.target.value as Payment["status"])}
+                  className={classNames(
+                    "text-xs font-medium rounded-full px-2 py-1 border-none",
+                    STATUS_STYLES[p.status]
+                  )}
+                >
+                  <option value="PENDING">PENDING</option>
+                  <option value="INVOICED">INVOICED</option>
+                  <option value="PAID">PAID</option>
+                </select>
+                <button
+                  onClick={() => remove(p.id)}
+                  className="text-xs text-gray-400 hover:text-danger"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

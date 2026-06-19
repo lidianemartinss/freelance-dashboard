@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { formatCurrency, formatDate, classNames } from "@/lib/utils";
@@ -161,4 +161,8 @@ export default function ProjectsPage() {
               </button>
             </div>
           ))}
-        </
+        </div>
+      )}
+    </div>
+  );
+}

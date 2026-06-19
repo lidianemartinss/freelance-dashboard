@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Payment } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatCurrency, formatDate, daysUntil, isDoneForPeriod } from "@/lib/utils";
@@ -21,7 +21,6 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  // Recurring tasks aren't "done" via the done flag — compute per-period completion in JS.
   const tasks = allOpenTasks
     .filter((t) => !isDoneForPeriod(t.recurrence, t.done, t.lastCompletedAt))
     .slice(0, 6);
@@ -166,4 +165,15 @@ export default async function DashboardPage() {
                     <p className="font-medium">{t.title}</p>
                     {t.project && <p className="text-gray-400">{t.project.name}</p>}
                   </div>
-    
+                  <div className="text-right text-gray-400">
+                    {t.dueDate ? formatDate(t.dueDate) : t.priority}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
